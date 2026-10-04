@@ -19,9 +19,12 @@ Private memories site. React + Vite, Supabase (login, database, access rules), h
     git remote add origin https://github.com/YOUR-USER/memories.git
     git push -u origin main
 
-## 4. Host on Cloudflare Pages (free)
-Pages > Create > Connect to Git > pick the repo. Build command `npm run build`, output `dist`.
-Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` under environment variables, then deploy.
+## 4. Host on GitHub Pages
+1. In the repository, open Settings > Secrets and variables > Actions. Add `VITE_SUPABASE_URL` as a repository variable and `VITE_SUPABASE_ANON_KEY` as a repository secret.
+2. Open Settings > Pages and select GitHub Actions as the build and deployment source.
+3. Push to `main` or manually run the Deploy to GitHub Pages workflow under Actions.
+4. The site will be available at `https://lifaroalloction-sys.github.io/vin_lifaro/`.
+5. In Supabase Authentication > URL Configuration, set the Site URL to the Pages URL and add it to the allowed redirect URLs.
 
 ## Security notes
 The anon key is meant to be public. Access is enforced by Row Level Security in the database: only listed emails can read, only admins can write.
