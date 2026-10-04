@@ -1,14 +1,12 @@
 # My Memories
 
-Private memories site. React + Vite, Supabase (Google sign-in, database, access rules), hosted on GitHub Pages.
+Public read-only memories site. React + Vite, Supabase, hosted on GitHub Pages.
 
 ## 1. Supabase (free)
 1. Create a project at supabase.com.
 2. SQL Editor: paste `supabase/schema.sql` and run it once. The admin email is already set in the file.
-3. Authentication > URL Configuration: set Site URL to `https://lifaroalloction-sys.github.io/vin_lifaro/` and add that exact URL under the allowed redirect URLs. Add `http://localhost:5173/` only for local development. Do not leave localhost as the production Site URL.
+3. Run `supabase/public_read_access.sql` in the SQL Editor. This makes categories and albums publicly readable; do not put private information in them.
 4. Settings > API Keys: copy the Project URL and the publishable (or legacy anon public) key.
-5. Authentication > Providers > Google: enable Google using a Google OAuth client ID and secret. In Google Cloud, set the authorized redirect URI to `https://pesyjaurxbnhjysrddte.supabase.co/auth/v1/callback`.
-6. Enter an approved email on the site and continue with Google. The Google account must match an email in the admins or viewers table. No sign-in email is sent by the app.
 
 ## 2. Run locally
     cp .env.example .env     # paste the two values
@@ -29,4 +27,4 @@ Private memories site. React + Vite, Supabase (Google sign-in, database, access 
 5. In Supabase Authentication > URL Configuration, set the Site URL to the Pages URL and add it to the allowed redirect URLs.
 
 ## Security notes
-The anon key is meant to be public. Access is enforced by Row Level Security in the database: only listed emails can read, only admins can write.
+Categories and album names are public to anyone. The public site is read-only; database write policies still require an authenticated admin. Never store private information in public categories or albums.
