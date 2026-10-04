@@ -24,6 +24,6 @@ create policy "members read" on albums for select to authenticated using (is_mem
 create policy "admin write" on albums for all to authenticated using (is_admin()) with check (is_admin());
 create policy "admin manage viewers" on viewers for all to authenticated using (is_admin()) with check (is_admin());
 
-insert into admins values ('YOUR-ADMIN-EMAIL@gmail.com');
+insert into admins values ('lifaro.alloction@gmail.com');
 insert into categories (name, icon) values ('Trips','✈️'),('Dance','💃'),('Birthdays','🎂'),('Family','👨‍👩‍👧'),('Winning moments','🏆'),('Temples visited','🛕');
 insert into albums (category_id, name) select id, unnest(array['Goa','Kerala']) from categories where name = 'Trips';
