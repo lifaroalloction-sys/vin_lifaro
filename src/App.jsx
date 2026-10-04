@@ -3,6 +3,23 @@ import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'memories'
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024
+const ICON_OPTIONS = [
+  ['📁', 'Folder'],
+  ['✈️', 'Travel'],
+  ['💃', 'Dance'],
+  ['🎂', 'Birthday'],
+  ['👨‍👩‍👧', 'Family'],
+  ['🏆', 'Achievement'],
+  ['🛕', 'Temple'],
+  ['🎉', 'Celebration'],
+  ['🎥', 'Video'],
+  ['🌊', 'Beach'],
+  ['🎓', 'Graduation'],
+  ['🏠', 'Home'],
+  ['📸', 'Photography'],
+  ['🎵', 'Music'],
+  ['🌿', 'Nature']
+]
 
 async function removeAlbumFiles(albumIds) {
   if (!albumIds.length) return null
@@ -25,7 +42,9 @@ function AddForm({ placeholder, onAdd, withIcon }) {
   }
   return (
     <form className="add" onSubmit={submit}>
-      {withIcon && <input className="icon-in" value={icon} onChange={event => setIcon(event.target.value)} maxLength={4} aria-label="Category icon" />}
+      {withIcon && <select className="icon-select" value={icon} onChange={event => setIcon(event.target.value)} aria-label="Choose icon">
+        {ICON_OPTIONS.map(([value, label]) => <option key={value} value={value}>{value} {label}</option>)}
+      </select>}
       <input required placeholder={placeholder} value={name} onChange={event => setName(event.target.value)} />
       <button className="primary">Add</button>
     </form>

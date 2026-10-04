@@ -28,9 +28,9 @@ body {
 	font: 16px/1.5 'DM Sans', sans-serif;
 }
 
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible, .tile:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+button:focus-visible, input:focus-visible, select:focus-visible, .tile:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
 h1, h2, h3, p { margin: 0; }
 h1, h2, h3, .brand { font-family: 'Fraunces', Georgia, serif; font-weight: 600; }
@@ -209,8 +209,8 @@ nav { display: flex; align-items: center; gap: 14px; }
 .link { margin-top: 22px; }
 
 .add { display: flex; gap: 9px; flex-wrap: wrap; }
-.add input:not(.icon-in) { min-width: 200px; flex: 1; }
-.icon-in { width: 64px; text-align: center; }
+.add input:not(.icon-select) { min-width: 200px; flex: 1; }
+.icon-select { min-width: 112px; min-height: 44px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 
 .notice { display: grid; grid-template-columns: 28px minmax(0, 1fr) 34px; align-items: center; gap: 10px; margin: 14px 0; padding: 9px 11px; border: 1px solid #e5b7a9; border-left: 4px solid var(--coral); border-radius: 8px; background: var(--surface); color: var(--ink); box-shadow: 3px 3px 0 rgba(32, 40, 42, .08); }
 .notice p { min-width: 0; overflow-wrap: anywhere; }
@@ -299,9 +299,9 @@ nav { display: flex; align-items: center; gap: 14px; }
 	.admin-login input { width: 100%; }
 	.admin-login .link { justify-self: start; }
 	.add { display: grid; grid-template-columns: 1fr auto; }
-	.add input:not(.icon-in) { width: 100%; min-width: 0; }
-	.add .icon-in { grid-row: 1; grid-column: 1; }
-	.add input:not(.icon-in) + button { grid-row: 2; grid-column: 1 / -1; }
+	.add input:not(.icon-select) { width: 100%; min-width: 0; }
+	.add .icon-select { grid-row: 1; grid-column: 1; }
+	.add input:not(.icon-select) + button { grid-row: 2; grid-column: 1 / -1; }
 	.media-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 	.media-item figcaption { min-height: 72px; align-items: flex-start; padding: 7px 8px; font-size: 11px; }
 	.media-item figcaption .x { min-height: 28px; padding: 4px 7px; font-size: 11px; }
