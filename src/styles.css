@@ -240,14 +240,10 @@ nav { display: flex; align-items: center; gap: 14px; }
 .media-details time, .media-filename { color: var(--muted); font-size: 11px; }
 .media-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .video-open { min-height: 32px; padding: 5px 8px; color: var(--teal); font-size: 12px; }
-.video-viewer { position: fixed; z-index: 10; inset: 0; display: grid; grid-template-columns: 48px minmax(0, 960px) 48px; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-content: center; gap: 14px; padding: 28px; background: rgba(15, 20, 20, .96); color: white; }
-.video-viewer video { grid-column: 2; width: 100%; max-height: calc(100vh - 110px); background: #050606; object-fit: contain; }
-.video-viewer p { grid-column: 2; min-width: 0; overflow-wrap: anywhere; color: #f4f2e9; text-align: center; }
+.video-viewer { position: fixed; z-index: 10; inset: 0; display: grid; grid-template-columns: minmax(0, 960px); grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-content: center; gap: 14px; padding: 28px; overscroll-behavior: contain; touch-action: none; background: rgba(15, 20, 20, .96); color: white; }
+.video-viewer video { grid-column: 1; width: 100%; max-height: calc(100vh - 110px); background: #050606; object-fit: contain; }
+.video-viewer p { grid-column: 1; min-width: 0; overflow-wrap: anywhere; color: #f4f2e9; text-align: center; }
 .video-close { position: absolute; top: 16px; right: 18px; width: 42px; min-height: 42px; padding: 0; border: 1px solid rgba(255,255,255,.3); background: transparent; color: white; font-size: 28px; }
-.video-previous, .video-next { min-height: 42px; padding: 8px; background: rgba(255,255,255,.12); color: white; font-size: 22px; }
-.video-previous { grid-column: 1; grid-row: 1; }
-.video-next { grid-column: 3; grid-row: 1; }
-.video-viewer button:disabled { opacity: .35; cursor: default; }
 
 .login { width: min(460px, 100% - 40px); margin: 15vh auto; }
 .login h1 { margin-bottom: 10px; font-size: 42px; }
@@ -314,7 +310,7 @@ nav { display: flex; align-items: center; gap: 14px; }
 	.upload-date { grid-column: 1 / -1; }
 	.upload-button { width: 100%; grid-column: 1 / -1; }
 	.media-upload > button { grid-column: 1 / -1; }
-	.video-viewer { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 6px; padding: 54px 10px 20px; }
+	.video-viewer { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 54px 10px 20px; }
 	.video-viewer video { max-height: calc(100vh - 125px); }
 	.video-close { top: 8px; right: 10px; }
 }

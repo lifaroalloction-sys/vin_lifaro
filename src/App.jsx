@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'memories'
@@ -288,6 +288,7 @@ function AlbumView({ album, onBack, isAdmin }) {
   const [description, setDescription] = useState('')
   const [takenOn, setTakenOn] = useState('')
   const [selectedVideoIndex, setSelectedVideoIndex] = useState(-1)
+  const touchStartY = useRef(null)
 
   async function load() {
     setLoading(true)
@@ -409,11 +410,22 @@ function AlbumView({ album, onBack, isAdmin }) {
           {selectedVideoIndex >= 0 && videos[selectedVideoIndex] && (() => {
             const item = videos[selectedVideoIndex]
             const url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(item.storage_path).data.publicUrl
-            return <div className="video-viewer" role="dialog" aria-modal="true" aria-label="Video viewer" onWheel={event => { event.preventDefault(); moveVideo(event.deltaY < 0 ? 1 : -1) }}>
+            return <div className="video-viewer" role="dialog" aria-modal="true" aria-label="Video viewer"
+              onWheel={event => {
+                if (Math.abs(event.deltaY) < 10) return
+                event.preventDefault()
+                moveVideo(event.deltaY < 0 ? 1 : -1)
+              }}
+              onTouchStart={event => { touchStartY.current = event.touches[0].clientY }}
+              onTouchEnd={event => {
+                if (touchStartY.current === null) return
+                const distance = touchStartY.current - event.changedTouches[0].clientY
+                touchStartY.current = null
+                if (Math.abs(distance) < 45) return
+                moveVideo(distance > 0 ? 1 : -1)
+              }}>
               <button className="video-close" type="button" aria-label="Close video viewer" onClick={() => setSelectedVideoIndex(-1)}>×</button>
-              <button className="video-previous" type="button" aria-label="Previous video" disabled={selectedVideoIndex === 0} onClick={() => moveVideo(-1)}>↑</button>
               <video key={item.id} src={url} controls autoPlay playsInline />
-              <button className="video-next" type="button" aria-label="Next video" disabled={selectedVideoIndex === videos.length - 1} onClick={() => moveVideo(1)}>↓</button>
               <p>{item.description || item.file_name}{item.taken_on && ` · ${new Date(`${item.taken_on}T00:00:00`).toLocaleDateString()}`}</p>
             </div>
           })()}
