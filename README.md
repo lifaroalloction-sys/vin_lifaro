@@ -8,7 +8,7 @@ Public memories site. Browsing is open; only the admin can edit categories/album
 3. Run `supabase/public_read_access.sql` in the SQL Editor. This makes categories and albums publicly readable; do not put private information in them.
 4. Settings > API Keys: copy the Project URL and the publishable (or legacy anon public) key.
 5. Run `supabase/media_uploads.sql` in the SQL Editor to create the public media bucket and admin-only upload policies.
-6. Authentication > Users > Add user > Create new user: create `lifaro.alloction@gmail.com`, set a new password there, and confirm the user if prompted. Choose Create, not Invite, to avoid sending an invitation email. Do not put the password in SQL, source code, or GitHub. Supabase Auth checks the password; the database verifies the admin role.
+6. Authentication > Users > Add user > Create new user: create `lifaro.alloction@gmail.com`, set a new password there, and confirm the user if prompted. Choose Create, not Invite. Do not put the password in SQL, source code, or GitHub. Supabase Auth checks the password; the database verifies the admin role.
 
 ## 2. Run locally
     cp .env.example .env     # paste the two values
@@ -26,7 +26,7 @@ Public memories site. Browsing is open; only the admin can edit categories/album
 2. Open Settings > Pages and select GitHub Actions as the build and deployment source.
 3. Push to `main` or manually run the Deploy to GitHub Pages workflow under Actions.
 4. The site will be available at `https://lifaroalloction-sys.github.io/vin_lifaro/`.
-5. In Supabase Authentication > URL Configuration, set the Site URL to the Pages URL and add it to the allowed redirect URLs.
+5. In Supabase Authentication > URL Configuration, set the Site URL to `https://lifaroalloction-sys.github.io/vin_lifaro/` and add that exact URL to the allowed redirect URLs. This is also the admin password-reset return address; do not leave `localhost:3000` as the Site URL.
 
 ## Security notes
 Categories, albums, photos, and videos are publicly viewable. The public site is read-only for visitors; category/album changes and uploads/deletions require the configured admin's Supabase Auth sign-in and are enforced by database/storage policies. Never upload private media. Never hardcode or commit the admin password.

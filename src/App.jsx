@@ -39,11 +39,15 @@ function useAdminSession() {
   const [authMessage, setAuthMessage] = useState('')
   const [showAdminLogin, setShowAdminLogin] = useState(false)
   const [adminPassword, setAdminPassword] = useState('')
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
+    })
     return () => subscription.subscription.unsubscribe()
   }, [])
 
@@ -82,7 +86,45 @@ function useAdminSession() {
     await supabase.auth.signOut()
   }
 
-  return { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword }
+  async function sendPasswordReset() {
+    setAuthMessage('')
+    const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString()
+    const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, { redirectTo })
+    setAuthMessage(error ? error.message : 'Password reset email sent. Open the newest reset email to continue.')
+  }
+
+  return { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery }
+}
+
+function PasswordRecovery({ onComplete }) {
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(event) {
+    event.preventDefault()
+    setMessage('')
+    if (password.length < 8) { setMessage('Use at least 8 characters for your password.'); return }
+    if (password !== confirmPassword) { setMessage('The passwords do not match.'); return }
+    setBusy(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    setBusy(false)
+    if (error) { setMessage(error.message); return }
+    onComplete()
+  }
+
+  return (
+    <main className="login">
+      <h1>Set admin password</h1>
+      <form onSubmit={submit}>
+        <input type="password" autoComplete="new-password" minLength={8} required placeholder="New password" value={password} onChange={event => setPassword(event.target.value)} />
+        <input type="password" autoComplete="new-password" minLength={8} required placeholder="Confirm new password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} />
+        <button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Save password'}</button>
+      </form>
+      {message && <p className="note">{message}</p>}
+    </main>
+  )
 }
 
 function Home({ onOpen, isAdmin }) {
@@ -255,13 +297,14 @@ function AlbumView({ album, onBack, isAdmin }) {
 
 export default function App() {
   const [cat, setCat] = useState(null)
-  const { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword } = useAdminSession()
+  const { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery } = useAdminSession()
   if (!supabase) return (
     <main className="login">
       <h1>My Memories</h1>
       <p className="muted">Supabase is not configured for this deployment yet.</p>
     </main>
   )
+  if (passwordRecovery) return <PasswordRecovery onComplete={() => setPasswordRecovery(false)} />
   return (
     <div className="shell">
       <header>
@@ -273,6 +316,7 @@ export default function App() {
           <input type="email" value={ADMIN_EMAIL} readOnly aria-label="Admin email" />
           <input type="password" value={adminPassword} onChange={event => setAdminPassword(event.target.value)} placeholder="Admin password" autoComplete="current-password" required />
           <button className="primary">Sign in</button>
+          <button className="link" type="button" onClick={sendPasswordReset}>Reset admin password</button>
         </form>
       )}
       {authMessage && <p className="note">{authMessage}</p>}
