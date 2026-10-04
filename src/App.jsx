@@ -136,6 +136,7 @@ function Home({ onOpen, isAdmin }) {
     setError(loadError ? 'Could not load memories. Public read access may not be enabled yet.' : '')
   }
   useEffect(() => { load() }, [])
+  const albumTotal = cats.reduce((total, category) => total + (category.albums?.[0]?.count || 0), 0)
   async function add(name, icon) {
     const { error: addError } = await supabase.from('categories').insert({ name, icon })
     if (addError) { setError(addError.message); return }
@@ -153,13 +154,29 @@ function Home({ onOpen, isAdmin }) {
   }
   return (
     <>
-      <h2>Your memories</h2>
+      <section className="home-hero">
+        <div className="hero-copy">
+          <p className="eyebrow"><span className="status-dot" /> THE LIFARO ARCHIVE <span className="eyebrow-rule" /> VOL. 01</p>
+          <h1>Good days,<br /><em>kept close.</em></h1>
+          <p className="hero-caption">Trips, family, celebrations, and all the in-between.</p>
+        </div>
+        <aside className="archive-stamp" aria-label={`${cats.length} collections in the archive`}>
+          <span className="stamp-label">MEMORY INDEX</span>
+          <strong>{String(cats.length).padStart(2, '0')}</strong>
+          <span className="stamp-footer">COLLECTIONS <span>✳</span></span>
+        </aside>
+      </section>
+      <div className="section-heading">
+        <div><p className="eyebrow">SORTED BY FEELING</p><h2>Your memories</h2></div>
+        <span className="section-count">{cats.length} collections <span>/</span> {albumTotal} albums</span>
+      </div>
       <div className="grid">
-        {cats.map(c => (
+        {cats.map((c, index) => (
           <div key={c.id} className="tile" onClick={() => onOpen(c)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onOpen(c)}>
-            <span className="emoji">{c.icon}</span>
-            <strong>{c.name}</strong>
-            <span className="muted">{c.albums?.[0]?.count || 0} albums</span>
+            <span className="tile-index">COLLECTION / {String(index + 1).padStart(2, '0')}</span>
+            <span className="emoji" aria-hidden="true">{c.icon}</span>
+            <strong className="tile-title">{c.name}</strong>
+            <span className="tile-meta">{String(c.albums?.[0]?.count || 0).padStart(2, '0')} albums <span>↗</span></span>
             {isAdmin && <button className="x" aria-label={`Delete ${c.name}`} onClick={event => { event.stopPropagation(); remove(c) }}>Delete</button>}
           </div>
         ))}
@@ -201,11 +218,17 @@ function Category({ cat, onBack, isAdmin }) {
   return (
     <>
       <button className="link" onClick={onBack}>Back to all memories</button>
-      <h2>{cat.icon} {cat.name}</h2>
+      <div className="collection-heading">
+        <span className="collection-icon" aria-hidden="true">{cat.icon}</span>
+        <div><p className="eyebrow">COLLECTION</p><h1>{cat.name}</h1></div>
+        <span className="section-count">{albums.length} albums</span>
+      </div>
       <div className="grid">
-        {albums.map(album => (
+        {albums.map((album, index) => (
           <div key={album.id} className="tile" onClick={() => setSelectedAlbum(album)} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && setSelectedAlbum(album)}>
-            <strong>{album.name}</strong>
+            <span className="tile-index">ALBUM / {String(index + 1).padStart(2, '0')}</span>
+            <strong className="tile-title">{album.name}</strong>
+            <span className="tile-meta">OPEN ALBUM <span>↗</span></span>
             {isAdmin && <button className="x" aria-label={`Delete ${album.name}`} onClick={event => { event.stopPropagation(); remove(album) }}>Delete</button>}
           </div>
         ))}
@@ -276,7 +299,7 @@ function AlbumView({ album, onBack, isAdmin }) {
   return (
     <section>
       <button className="link" onClick={onBack}>Back to albums</button>
-      <h2>{album.name}</h2>
+      <div className="album-heading"><p className="eyebrow">INSIDE THE ALBUM</p><h1>{album.name}</h1></div>
       {isAdmin && <label className="upload-button primary">{busy ? 'Uploading…' : 'Upload photos or videos'}<input type="file" accept="image/*,video/*" multiple disabled={busy} onChange={upload} /></label>}
       {error && <p className="note">{error}</p>}
       {!media.length && !error && <p className="muted">No photos or videos yet.</p>}
@@ -308,15 +331,19 @@ export default function App() {
   return (
     <div className="shell">
       <header>
-        <strong className="brand">My Memories</strong>
-        <nav>{isAdmin ? <button onClick={signOut}>Admin sign out</button> : <button onClick={() => setShowAdminLogin(open => !open)}>Admin sign in</button>}</nav>
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true">M</span>
+          <div><strong className="brand">My Memories</strong><span className="brand-caption">THE LIFARO ARCHIVE</span></div>
+        </div>
+        <nav><span className="view-status"><span className="status-dot" /> PUBLIC VIEW</span>{isAdmin ? <button className="admin-button" onClick={signOut}>Admin sign out <span>↗</span></button> : <button className="admin-button" onClick={() => setShowAdminLogin(open => !open)}>Admin sign in <span>↗</span></button>}</nav>
       </header>
       {showAdminLogin && !isAdmin && (
         <form className="admin-login" onSubmit={signIn}>
+          <span className="admin-login-title">ADMIN ACCESS</span>
           <input type="email" value={ADMIN_EMAIL} readOnly aria-label="Admin email" />
           <input type="password" value={adminPassword} onChange={event => setAdminPassword(event.target.value)} placeholder="Admin password" autoComplete="current-password" required />
-          <button className="primary">Sign in</button>
-          <button className="link" type="button" onClick={sendPasswordReset}>Reset admin password</button>
+          <button className="primary">Sign in <span>↗</span></button>
+          <button className="link" type="button" onClick={sendPasswordReset}>Reset password</button>
         </form>
       )}
       {authMessage && <p className="note">{authMessage}</p>}
