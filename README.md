@@ -1,12 +1,14 @@
 # My Memories
 
-Public read-only memories site. React + Vite, Supabase, hosted on GitHub Pages.
+Public memories site. Browsing is open; only the admin can edit categories/albums and upload or delete media. React + Vite, Supabase, hosted on GitHub Pages.
 
 ## 1. Supabase (free)
 1. Create a project at supabase.com.
 2. In SQL Editor, run `supabase/schema.sql` once to create the tables and starter categories. The admin email is already set in the file. If the tables already exist, run `supabase/public_seed.sql` to add any missing starter categories and albums instead.
 3. Run `supabase/public_read_access.sql` in the SQL Editor. This makes categories and albums publicly readable; do not put private information in them.
 4. Settings > API Keys: copy the Project URL and the publishable (or legacy anon public) key.
+5. Run `supabase/media_uploads.sql` in the SQL Editor to create the public media bucket and admin-only upload policies.
+6. Authentication > Providers > Google: enable Google for admin editing. In Google Cloud, set the authorized redirect URI to `https://pesyjaurxbnhjysrddte.supabase.co/auth/v1/callback`.
 
 ## 2. Run locally
     cp .env.example .env     # paste the two values
@@ -27,4 +29,4 @@ Public read-only memories site. React + Vite, Supabase, hosted on GitHub Pages.
 5. In Supabase Authentication > URL Configuration, set the Site URL to the Pages URL and add it to the allowed redirect URLs.
 
 ## Security notes
-Categories and album names are public to anyone. The public site is read-only; database write policies still require an authenticated admin. Never store private information in public categories or albums.
+Categories, albums, photos, and videos are publicly viewable. The public site is read-only; category/album changes and uploads/deletions require the configured admin's Google sign-in and are enforced by database/storage policies. Never upload private media.
