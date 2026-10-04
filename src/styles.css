@@ -212,7 +212,13 @@ nav { display: flex; align-items: center; gap: 14px; }
 .add input:not(.icon-in) { min-width: 200px; flex: 1; }
 .icon-in { width: 64px; text-align: center; }
 
-.note { margin: 14px 0; padding: 12px 15px; border-left: 4px solid var(--coral); border-radius: 0 7px 7px 0; background: var(--surface); color: var(--ink); }
+.notice { display: grid; grid-template-columns: 28px minmax(0, 1fr) 34px; align-items: center; gap: 10px; margin: 14px 0; padding: 9px 11px; border: 1px solid #e5b7a9; border-left: 4px solid var(--coral); border-radius: 8px; background: var(--surface); color: var(--ink); box-shadow: 3px 3px 0 rgba(32, 40, 42, .08); }
+.notice p { min-width: 0; overflow-wrap: anywhere; }
+.notice-mark { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: #fbe2d8; color: #a74332; font-weight: 800; }
+.notice-success { border-color: #b8cf7a; border-left-color: var(--teal); background: #f8fbe9; }
+.notice-success .notice-mark { background: var(--lime); color: var(--ink); }
+.notice-close { display: grid; width: 32px; min-height: 32px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
+.notice-close:hover { transform: none; border: 0; background: rgba(32, 40, 42, .08); color: var(--ink); }
 .upload-button { position: relative; display: inline-flex; min-height: 44px; align-items: center; overflow: hidden; margin: 4px 0 18px; padding: 9px 15px; border: 1px solid var(--teal); border-radius: 8px; background: var(--teal); color: white; font-weight: 700; }
 .upload-button input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .upload-button input:disabled { cursor: wait; }

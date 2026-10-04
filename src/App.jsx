@@ -93,7 +93,7 @@ function useAdminSession() {
     setAuthMessage(error ? error.message : 'Password reset email sent. Open the newest reset email to continue.')
   }
 
-  return { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery }
+  return { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery }
 }
 
 function PasswordRecovery({ onComplete }) {
@@ -122,8 +122,18 @@ function PasswordRecovery({ onComplete }) {
         <input type="password" autoComplete="new-password" minLength={8} required placeholder="Confirm new password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} />
         <button className="primary" disabled={busy}>{busy ? 'Saving…' : 'Save password'}</button>
       </form>
-      {message && <p className="note">{message}</p>}
+      {message && <Notice message={message} onDismiss={() => setMessage('')} />}
     </main>
+  )
+}
+
+function Notice({ message, onDismiss, tone = 'error' }) {
+  return (
+    <div className={`notice notice-${tone}`} role={tone === 'error' ? 'alert' : 'status'}>
+      <span className="notice-mark" aria-hidden="true">{tone === 'error' ? '!' : '✓'}</span>
+      <p>{message}</p>
+      <button className="notice-close" type="button" aria-label="Dismiss message" onClick={onDismiss}>×</button>
+    </div>
   )
 }
 
@@ -157,8 +167,8 @@ function Home({ onOpen, isAdmin }) {
       <section className="home-hero">
         <div className="hero-copy">
           <p className="eyebrow"><span className="status-dot" /> THE LIFARO ARCHIVE <span className="eyebrow-rule" /> VOL. 01</p>
-          <h1>Good days,<br /><em>kept close.</em></h1>
-          <p className="hero-caption">Trips, family, celebrations, and all the in-between.</p>
+          <h1>Our life,<br /><em>in moments.</em></h1>
+          <p className="hero-caption">Trips, celebrations, family, and the everyday bits in between.</p>
         </div>
         <aside className="archive-stamp" aria-label={`${cats.length} collections in the archive`}>
           <span className="stamp-label">MEMORY INDEX</span>
@@ -167,7 +177,7 @@ function Home({ onOpen, isAdmin }) {
         </aside>
       </section>
       <div className="section-heading">
-        <div><p className="eyebrow">SORTED BY FEELING</p><h2>Your memories</h2></div>
+        <div><p className="eyebrow">THE MEMORY INDEX</p><h2>All the good bits</h2></div>
         <span className="section-count">{cats.length} collections <span>/</span> {albumTotal} albums</span>
       </div>
       <div className="grid">
@@ -182,7 +192,7 @@ function Home({ onOpen, isAdmin }) {
         ))}
       </div>
       {isAdmin && <><h3>Add a category</h3><AddForm withIcon placeholder="Category name" onAdd={add} /></>}
-      {error && <p className="note">{error}</p>}
+      {error && <Notice message={error} onDismiss={() => setError('')} />}
       {!cats.length && !error && <p className="muted">No categories yet.</p>}
     </>
   )
@@ -234,7 +244,7 @@ function Category({ cat, onBack, isAdmin }) {
         ))}
       </div>
       {isAdmin && <><h3>Add an album</h3><AddForm placeholder="Album name" onAdd={add} /></>}
-      {error && <p className="note">{error}</p>}
+      {error && <Notice message={error} onDismiss={() => setError('')} />}
       {!albums.length && !error && <p className="muted">No albums yet.</p>}
     </>
   )
@@ -299,9 +309,9 @@ function AlbumView({ album, onBack, isAdmin }) {
   return (
     <section>
       <button className="link" onClick={onBack}>Back to albums</button>
-      <div className="album-heading"><p className="eyebrow">INSIDE THE ALBUM</p><h1>{album.name}</h1></div>
+      <div className="album-heading"><p className="eyebrow">PHOTO JOURNAL <span className="eyebrow-rule" /> {new Date().getFullYear()}</p><h1>{album.name}</h1><p className="hero-caption">A little more of the story.</p></div>
       {isAdmin && <label className="upload-button primary">{busy ? 'Uploading…' : 'Upload photos or videos'}<input type="file" accept="image/*,video/*" multiple disabled={busy} onChange={upload} /></label>}
-      {error && <p className="note">{error}</p>}
+      {error && <Notice message={error} onDismiss={() => setError('')} />}
       {!media.length && !error && <p className="muted">No photos or videos yet.</p>}
       <div className="media-grid">
         {media.map(item => {
@@ -320,7 +330,7 @@ function AlbumView({ album, onBack, isAdmin }) {
 
 export default function App() {
   const [cat, setCat] = useState(null)
-  const { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery } = useAdminSession()
+  const { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery } = useAdminSession()
   if (!supabase) return (
     <main className="login">
       <h1>My Memories</h1>
@@ -346,7 +356,7 @@ export default function App() {
           <button className="link" type="button" onClick={sendPasswordReset}>Reset password</button>
         </form>
       )}
-      {authMessage && <p className="note">{authMessage}</p>}
+      {authMessage && <Notice message={authMessage} tone={authMessage.startsWith('Password reset email sent') ? 'success' : 'error'} onDismiss={() => setAuthMessage('')} />}
       {session && !isAdmin && <p className="muted">Browsing publicly. Only the configured admin can make changes.</p>}
       <main>
         {cat ? <Category cat={cat} onBack={() => setCat(null)} isAdmin={isAdmin} /> : <Home onOpen={setCat} isAdmin={isAdmin} />}
