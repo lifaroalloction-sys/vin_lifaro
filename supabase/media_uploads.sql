@@ -2,11 +2,16 @@ create table if not exists public.media (
   id uuid primary key default gen_random_uuid(),
   album_id uuid not null references public.albums(id) on delete cascade,
   file_name text not null,
+  description text not null default '',
+  taken_on date,
   storage_path text not null unique,
   media_type text not null check (media_type in ('image', 'video')),
   mime_type text not null,
   created_at timestamptz not null default now()
 );
+
+alter table public.media add column if not exists description text not null default '';
+alter table public.media add column if not exists taken_on date;
 
 create index if not exists media_album_created_idx on public.media (album_id, created_at desc);
 alter table public.media enable row level security;
