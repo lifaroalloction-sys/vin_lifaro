@@ -64,7 +64,7 @@ function useAdminSession() {
     setAuthMessage('')
     const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: adminPassword })
     if (error) {
-      setAuthMessage('Admin sign-in failed. Check the email and password configured in Supabase Auth.')
+      setAuthMessage(`Admin sign-in failed: ${error.message}`)
       return
     }
     const { data, error: roleError } = await supabase.rpc('is_admin')
