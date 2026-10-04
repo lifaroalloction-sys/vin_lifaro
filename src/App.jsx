@@ -16,13 +16,16 @@ function Login() {
       const { data, error: accessError } = await supabase.rpc('email_allowed', { e: addr })
       if (accessError) throw accessError
       if (!data) { setMsg('This email is not approved. Ask the admin to add it.'); return }
-      const { error } = await supabase.auth.signInWithOtp({
-        email: addr,
-        options: { emailRedirectTo: getAuthRedirectUrl() }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: getAuthRedirectUrl(),
+          queryParams: { login_hint: addr }
+        }
       })
-      setMsg(error ? error.message : 'Check your inbox for the sign-in link.')
+      if (error) throw error
     } catch {
-      setMsg('Could not send a sign-in link. Please try again.')
+      setMsg('Could not start Google sign-in. Check that Google is enabled in Supabase.')
     } finally {
       setBusy(false)
     }
@@ -33,7 +36,7 @@ function Login() {
       <p className="muted">A private place for trips, family, and the moments that matter.</p>
       <form onSubmit={submit}>
         <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-        <button className="primary" disabled={busy}>Send sign-in link</button>
+        <button className="primary" disabled={busy}>Continue with Google</button>
       </form>
       {msg && <p className="note">{msg}</p>}
     </main>
