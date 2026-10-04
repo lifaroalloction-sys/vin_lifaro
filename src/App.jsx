@@ -10,7 +10,8 @@ function Login() {
     const addr = email.trim().toLowerCase()
     const { data } = await supabase.rpc('email_allowed', { e: addr })
     if (!data) { setMsg('This email is not approved. Ask the admin to add it.'); setBusy(false); return }
-    const { error } = await supabase.auth.signInWithOtp({ email: addr, options: { emailRedirectTo: window.location.origin } })
+    const emailRedirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString()
+    const { error } = await supabase.auth.signInWithOtp({ email: addr, options: { emailRedirectTo } })
     setMsg(error ? error.message : 'Check your inbox for the sign-in link.'); setBusy(false)
   }
   return (
