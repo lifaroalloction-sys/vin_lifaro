@@ -29,7 +29,6 @@ body {
 }
 
 button, input { font: inherit; }
-textarea { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible, input:focus-visible, .tile:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
@@ -223,45 +222,32 @@ nav { display: flex; align-items: center; gap: 14px; }
 .loading-state { display: flex; min-height: 128px; align-items: center; justify-content: center; gap: 11px; border: 1px dashed var(--line); border-radius: 9px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .loading-spinner { width: 19px; height: 19px; border: 2px solid var(--line); border-top-color: var(--coral); border-radius: 50%; animation: loading-spin .75s linear infinite; }
 @keyframes loading-spin { to { transform: rotate(360deg); } }
-.upload-button { position: relative; display: inline-flex; min-height: 44px; align-items: center; overflow: hidden; margin: 4px 0 18px; padding: 9px 15px; border: 1px solid var(--teal); border-radius: 8px; background: var(--teal); color: white; font-weight: 700; }
+.media-upload { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; margin: 5px 0 18px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.upload-field { display: flex; min-width: 220px; flex: 1; flex-direction: column; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.upload-field input { width: 100%; }
+.upload-date { min-width: 170px; flex: 0 1 190px; }
+.upload-button { position: relative; display: inline-flex; min-height: 44px; align-items: center; justify-content: center; overflow: hidden; margin: 0; padding: 9px 15px; border: 1px solid var(--teal); border-radius: 8px; background: var(--teal); color: white; font-weight: 700; }
 .upload-button input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .upload-button input:disabled { cursor: wait; }
-.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 15px; margin-top: 18px; }
-.media-item { display: flex; min-width: 0; flex-direction: column; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); box-shadow: 2px 3px 0 rgba(32, 40, 42, .07); }
-.media-preview { position: relative; overflow: hidden; background: var(--ink); }
-.media-item img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--ink); }
-.media-item video { display: block; width: 100%; height: auto; max-height: 460px; aspect-ratio: auto; object-fit: contain; background: var(--ink); }
-.video-viewer-trigger { position: absolute; right: 10px; bottom: 10px; min-height: 34px; padding: 6px 10px; border-color: rgba(255, 255, 255, .6); background: rgba(22, 29, 29, .86); color: white; font-size: 12px; }
-.video-viewer-trigger:hover { border-color: white; }
-.media-item figcaption { display: flex; min-height: 66px; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 11px 12px; overflow-wrap: anywhere; font-size: 13px; }
-.media-details { display: grid; min-width: 0; gap: 5px; }
-.media-filename { overflow-wrap: anywhere; font-size: 13px; }
-.media-details p { color: var(--muted); overflow-wrap: anywhere; }
-.media-details time, .viewer-caption time { color: var(--teal); font-size: 11px; font-weight: 700; }
-
-.upload-modal-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; overflow-y: auto; background: rgba(22, 29, 29, .68); }
-.upload-modal { position: relative; width: min(560px, 100%); max-height: min(90vh, 820px); overflow-y: auto; padding: 28px; border: 1px solid var(--ink); border-radius: 12px; background: var(--paper); box-shadow: 8px 8px 0 var(--ink); }
-.upload-modal h2 { margin: 8px 36px 20px 0; font-size: 32px; }
-.modal-close { position: absolute; top: 14px; right: 14px; width: 36px; min-height: 36px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
-.upload-modal form { display: grid; gap: 15px; }
-.field-label { display: grid; gap: 7px; color: var(--ink); font-size: 13px; font-weight: 700; }
-.field-label textarea { width: 100%; min-height: 92px; resize: vertical; padding: 11px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
-.field-label input[type="date"], .file-input { width: 100%; }
-.selected-files { padding: 9px 11px; border-radius: 7px; background: var(--surface); color: var(--muted); overflow-wrap: anywhere; font-size: 12px; }
-.upload-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 4px; }
-.video-viewer { position: fixed; inset: 0; z-index: 50; display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-items: center; gap: 12px; padding: 56px 20px 48px; overflow: hidden; background: rgba(14, 18, 18, .97); touch-action: none; }
-.video-viewer-content { display: grid; width: min(100%, 1120px); height: 100%; min-height: 0; grid-column: 2; grid-row: 1; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: 12px; }
-.video-viewer-content video { display: block; width: 100%; height: 100%; min-height: 0; max-height: calc(100vh - 190px); object-fit: contain; background: #080a0a; }
-.viewer-caption { width: min(100%, 800px); color: white; text-align: center; }
-.viewer-caption strong { display: block; overflow-wrap: anywhere; }
-.viewer-caption p { margin-top: 4px; color: #c8d0ca; }
-.viewer-caption time { display: block; margin-top: 5px; color: var(--lime); }
-.viewer-close { position: absolute; top: 16px; right: 18px; z-index: 2; width: 42px; min-height: 42px; padding: 0; border-color: rgba(255, 255, 255, .35); border-radius: 50%; background: #262e2e; color: white; font-size: 26px; line-height: 1; }
-.viewer-nav { z-index: 2; display: grid; width: 46px; min-height: 46px; place-items: center; padding: 0; border-color: rgba(255, 255, 255, .3); border-radius: 50%; background: #262e2e; color: white; font-size: 23px; }
-.viewer-previous { grid-column: 1; grid-row: 1; }
-.viewer-next { grid-column: 3; grid-row: 1; }
-.viewer-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); color: #c8d0ca; font-size: 10px; font-weight: 700; white-space: nowrap; }
-.viewer-hint span { padding: 0 6px; color: var(--lime); }
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); align-items: start; gap: 15px; margin-top: 18px; }
+.media-item { min-width: 0; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.media-preview { width: 100%; aspect-ratio: 4/3; overflow: hidden; background: var(--ink); }
+.media-item img, .media-item video { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--ink); }
+.media-item video { object-fit: contain; }
+.media-item figcaption { display: flex; min-height: 78px; align-items: flex-start; justify-content: space-between; gap: 9px; padding: 10px 11px; overflow-wrap: anywhere; font-size: 13px; }
+.media-details { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.media-details strong { font-size: 14px; line-height: 1.35; }
+.media-details time, .media-filename { color: var(--muted); font-size: 11px; }
+.media-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+.video-open { min-height: 32px; padding: 5px 8px; color: var(--teal); font-size: 12px; }
+.video-viewer { position: fixed; z-index: 10; inset: 0; display: grid; grid-template-columns: 48px minmax(0, 960px) 48px; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-content: center; gap: 14px; padding: 28px; background: rgba(15, 20, 20, .96); color: white; }
+.video-viewer video { grid-column: 2; width: 100%; max-height: calc(100vh - 110px); background: #050606; object-fit: contain; }
+.video-viewer p { grid-column: 2; min-width: 0; overflow-wrap: anywhere; color: #f4f2e9; text-align: center; }
+.video-close { position: absolute; top: 16px; right: 18px; width: 42px; min-height: 42px; padding: 0; border: 1px solid rgba(255,255,255,.3); background: transparent; color: white; font-size: 28px; }
+.video-previous, .video-next { min-height: 42px; padding: 8px; background: rgba(255,255,255,.12); color: white; font-size: 22px; }
+.video-previous { grid-column: 1; grid-row: 1; }
+.video-next { grid-column: 3; grid-row: 1; }
+.video-viewer button:disabled { opacity: .35; cursor: default; }
 
 .login { width: min(460px, 100% - 40px); margin: 15vh auto; }
 .login h1 { margin-bottom: 10px; font-size: 42px; }
@@ -321,18 +307,16 @@ nav { display: flex; align-items: center; gap: 14px; }
 	.add .icon-in { grid-row: 1; grid-column: 1; }
 	.add input:not(.icon-in) + button { grid-row: 2; grid-column: 1 / -1; }
 	.media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-	.media-item figcaption { align-items: flex-start; padding: 7px 8px; font-size: 11px; }
+	.media-item figcaption { min-height: 72px; align-items: flex-start; padding: 7px 8px; font-size: 11px; }
 	.media-item figcaption .x { min-height: 28px; padding: 4px 7px; font-size: 11px; }
-	.upload-button { width: 100%; justify-content: center; }
-	.media-item video { max-height: 58vh; }
-	.upload-modal-backdrop { align-items: end; padding: 0; }
-	.upload-modal { width: 100%; max-height: 92vh; padding: 24px 18px max(22px, env(safe-area-inset-bottom)); border-radius: 14px 14px 0 0; box-shadow: 0 -5px 0 var(--ink); }
-	.upload-modal h2 { font-size: 28px; }
-	.video-viewer { grid-template-columns: 38px minmax(0, 1fr) 38px; gap: 5px; padding: 64px 7px 55px; }
-	.video-viewer-content video { max-height: calc(100dvh - 180px); }
-	.viewer-nav { width: 36px; min-height: 36px; font-size: 18px; }
-	.viewer-close { top: 11px; right: 11px; width: 38px; min-height: 38px; }
-	.viewer-hint { bottom: 13px; font-size: 9px; }
+	.media-upload { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 10px; }
+	.upload-field { min-width: 0; }
+	.upload-date { grid-column: 1 / -1; }
+	.upload-button { width: 100%; grid-column: 1 / -1; }
+	.media-upload > button { grid-column: 1 / -1; }
+	.video-viewer { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 6px; padding: 54px 10px 20px; }
+	.video-viewer video { max-height: calc(100vh - 125px); }
+	.video-close { top: 8px; right: 10px; }
 }
 
 @media (max-width: 360px) {

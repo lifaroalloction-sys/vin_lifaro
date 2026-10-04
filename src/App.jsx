@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'memories'
@@ -284,17 +284,10 @@ function AlbumView({ album, onBack, isAdmin }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [showUploader, setShowUploader] = useState(false)
-  const [uploadFiles, setUploadFiles] = useState([])
+  const [selectedFiles, setSelectedFiles] = useState([])
   const [description, setDescription] = useState('')
   const [takenOn, setTakenOn] = useState('')
-  const [uploadError, setUploadError] = useState('')
-  const [viewerVideoId, setViewerVideoId] = useState(null)
-  const lastWheelAt = useRef(0)
-  const touchStartY = useRef(null)
-  const videos = media.filter(item => item.media_type === 'video')
-  const activeVideoIndex = videos.findIndex(item => item.id === viewerVideoId)
-  const activeVideo = activeVideoIndex >= 0 ? videos[activeVideoIndex] : null
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState(-1)
 
   async function load() {
     setLoading(true)
@@ -311,84 +304,43 @@ function AlbumView({ album, onBack, isAdmin }) {
   }
   useEffect(() => { load() }, [album.id])
 
-  function moveVideo(direction) {
-    if (!videos.length) return
-    const nextIndex = (activeVideoIndex + direction + videos.length) % videos.length
-    setViewerVideoId(videos[nextIndex].id)
-  }
-
-  function handleViewerWheel(event) {
-    event.preventDefault()
-    if (Math.abs(event.deltaY) < 24 || Date.now() - lastWheelAt.current < 450) return
-    lastWheelAt.current = Date.now()
-    moveVideo(event.deltaY < 0 ? 1 : -1)
-  }
-
-  function handleViewerTouchEnd(event) {
-    if (touchStartY.current === null) return
-    const distance = event.changedTouches[0].clientY - touchStartY.current
-    touchStartY.current = null
-    if (Math.abs(distance) < 45) return
-    moveVideo(distance < 0 ? 1 : -1)
-  }
-
-  useEffect(() => {
-    if (!activeVideo) return
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setViewerVideoId(null)
-      if (event.key === 'ArrowUp' || event.key === 'ArrowRight') moveVideo(1)
-      if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') moveVideo(-1)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeVideo, activeVideoIndex, videos.length])
-
-  function closeUploader() {
-    setShowUploader(false)
-    setUploadFiles([])
-    setDescription('')
-    setTakenOn('')
-    setUploadError('')
-  }
-
   async function upload(event) {
     event.preventDefault()
-    if (!uploadFiles.length) { setUploadError('Choose at least one photo or video.'); return }
-    if (!description.trim()) { setUploadError('Add a description for this memory.'); return }
-    if (!takenOn) { setUploadError('Choose the date this memory was captured.'); return }
+    const files = selectedFiles
+    if (!files.length) return
     setBusy(true)
-    setUploadError('')
-    const failures = []
-    for (const file of uploadFiles) {
+    setError('')
+    for (const file of files) {
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        failures.push(`${file.name} is not an image or video.`)
+        setError(`${file.name} is not an image or video.`)
         continue
       }
       if (file.size > MAX_UPLOAD_SIZE) {
-        failures.push(`${file.name} is larger than the 50 MB limit.`)
+        setError(`${file.name} is larger than the 50 MB limit.`)
         continue
       }
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
       const storagePath = `${album.id}/${crypto.randomUUID()}-${safeName}`
       const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(storagePath, file, { contentType: file.type })
-      if (uploadError) { failures.push(`${file.name}: ${uploadError.message}`); continue }
+      if (uploadError) { setError(uploadError.message); continue }
       const { error: rowError } = await supabase.from('media').insert({
         album_id: album.id,
         file_name: file.name,
         description: description.trim(),
-        taken_on: takenOn,
+        taken_on: takenOn || null,
         storage_path: storagePath,
         media_type: file.type.startsWith('video/') ? 'video' : 'image',
         mime_type: file.type
       })
       if (rowError) {
         await supabase.storage.from(STORAGE_BUCKET).remove([storagePath])
-        failures.push(`${file.name}: ${rowError.message}`)
+        setError(rowError.message)
       }
     }
     setBusy(false)
-    if (failures.length) { setUploadError(failures.join(' ')); return }
-    closeUploader()
+    setSelectedFiles([])
+    setDescription('')
+    setTakenOn('')
     await load()
   }
 
@@ -401,38 +353,33 @@ function AlbumView({ album, onBack, isAdmin }) {
     await load()
   }
 
+  const videos = media.filter(item => item.media_type === 'video')
+  function moveVideo(direction) {
+    setSelectedVideoIndex(index => Math.min(videos.length - 1, Math.max(0, index + direction)))
+  }
+
+  useEffect(() => {
+    if (selectedVideoIndex < 0) return
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setSelectedVideoIndex(-1)
+      if (event.key === 'ArrowUp') moveVideo(1)
+      if (event.key === 'ArrowDown') moveVideo(-1)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedVideoIndex, videos.length])
+
   return (
     <section>
       <button className="link" onClick={onBack}>Back to albums</button>
       <div className="album-heading"><p className="eyebrow">PHOTO JOURNAL <span className="eyebrow-rule" /> {new Date().getFullYear()}</p><h1>{album.name}</h1><p className="hero-caption">A little more of the story.</p></div>
-      {isAdmin && <button className="upload-button primary" type="button" onClick={() => { setUploadError(''); setShowUploader(true) }}>＋ Add photos or videos</button>}
+      {isAdmin && <form className="media-upload" onSubmit={upload}>
+        <label className="upload-field"><span>Description</span><input value={description} onChange={event => setDescription(event.target.value)} placeholder="What happened in this moment?" disabled={busy} /></label>
+        <label className="upload-field upload-date"><span>Date taken</span><input type="date" value={takenOn} onChange={event => setTakenOn(event.target.value)} disabled={busy} /></label>
+        <label className="upload-button primary">{selectedFiles.length ? `${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} selected` : 'Choose photos or videos'}<input type="file" accept="image/*,video/*" multiple disabled={busy} onChange={event => { setSelectedFiles(Array.from(event.target.files || [])); event.target.value = '' }} /></label>
+        <button className="primary" type="submit" disabled={busy || !selectedFiles.length}>{busy ? 'Uploading…' : 'Upload'}</button>
+      </form>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
-      {showUploader && (
-        <div className="upload-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget && !busy) closeUploader() }}>
-          <section className="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-title">
-            <button className="modal-close" type="button" aria-label="Close upload form" disabled={busy} onClick={closeUploader}>×</button>
-            <p className="eyebrow">NEW MEMORY</p>
-            <h2 id="upload-title">Add to {album.name}</h2>
-            <form onSubmit={upload}>
-              <label className="field-label">Photos or videos
-                <input className="file-input" type="file" accept="image/*,video/*" multiple required disabled={busy} onChange={event => { setUploadFiles(Array.from(event.target.files || [])); setUploadError('') }} />
-              </label>
-              {uploadFiles.length > 0 && <p className="selected-files">{uploadFiles.length} selected: {uploadFiles.map(file => file.name).join(', ')}</p>}
-              <label className="field-label">Description
-                <textarea required maxLength={500} rows={3} placeholder="What do you want to remember?" value={description} onChange={event => setDescription(event.target.value)} />
-              </label>
-              <label className="field-label">Date captured
-                <input type="date" required value={takenOn} onChange={event => setTakenOn(event.target.value)} />
-              </label>
-              {uploadError && <Notice message={uploadError} onDismiss={() => setUploadError('')} />}
-              <div className="upload-actions">
-                <button type="button" className="link" disabled={busy} onClick={closeUploader}>Cancel</button>
-                <button className="primary" disabled={busy || !uploadFiles.length}>{busy ? 'Uploading…' : `Upload ${uploadFiles.length || ''} ${uploadFiles.length === 1 ? 'file' : 'files'}`}</button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
       {loading ? <LoadingState label="Opening the album…" /> : (
         <>
           {!media.length && !error && <p className="muted">No photos or videos yet.</p>}
@@ -440,40 +387,37 @@ function AlbumView({ album, onBack, isAdmin }) {
             {media.map(item => {
               const url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(item.storage_path).data.publicUrl
               return (
-                <figure className={`media-item media-${item.media_type}`} key={item.id}>
+                <figure className="media-item" key={item.id}>
                   <div className="media-preview">
-                    {item.media_type === 'video' ? <video src={url} controls preload="metadata" playsInline /> : <img src={url} alt={item.description || item.file_name} loading="lazy" />}
-                    {item.media_type === 'video' && <button className="video-viewer-trigger" type="button" onClick={() => setViewerVideoId(item.id)}>Open video ↗</button>}
+                    {item.media_type === 'video' ? <video src={url} controls preload="metadata" /> : <img src={url} alt={item.description || item.file_name} loading="lazy" />}
                   </div>
                   <figcaption>
                     <div className="media-details">
-                      <strong className="media-filename">{item.file_name}</strong>
-                      {item.description && <p>{item.description}</p>}
-                      {item.taken_on && <time dateTime={item.taken_on}>Captured {new Date(`${item.taken_on}T12:00:00`).toLocaleDateString()}</time>}
+                      <strong>{item.description || item.file_name}</strong>
+                      {item.description && <span className="media-filename">{item.file_name}</span>}
+                      {item.taken_on && <time dateTime={item.taken_on}>{new Date(`${item.taken_on}T00:00:00`).toLocaleDateString()}</time>}
                     </div>
-                    {isAdmin && <button className="x" aria-label={`Delete ${item.file_name}`} onClick={() => remove(item)}>Delete</button>}
+                    <div className="media-actions">
+                      {item.media_type === 'video' && <button type="button" className="video-open" onClick={() => setSelectedVideoIndex(videos.findIndex(video => video.id === item.id))}>View video</button>}
+                      {isAdmin && <button className="x" onClick={() => remove(item)}>Delete</button>}
+                    </div>
                   </figcaption>
                 </figure>
               )
             })}
           </div>
-        </>
-      )}
-      {activeVideo && (
-        <div className="video-viewer" role="dialog" aria-modal="true" aria-label={`Video viewer: ${activeVideo.file_name}`} onClick={() => setViewerVideoId(null)} onWheel={handleViewerWheel} onTouchStart={event => { touchStartY.current = event.touches[0].clientY }} onTouchEnd={handleViewerTouchEnd}>
-          <button className="viewer-close" type="button" aria-label="Close video viewer" onClick={() => setViewerVideoId(null)}>×</button>
-          {videos.length > 1 && <button className="viewer-nav viewer-previous" type="button" aria-label="Previous video" onClick={event => { event.stopPropagation(); moveVideo(-1) }}>↓</button>}
-          <div className="video-viewer-content" onClick={event => event.stopPropagation()}>
-            <video key={activeVideo.id} src={supabase.storage.from(STORAGE_BUCKET).getPublicUrl(activeVideo.storage_path).data.publicUrl} controls autoPlay playsInline />
-            <div className="viewer-caption">
-              <strong>{activeVideo.file_name}</strong>
-              {activeVideo.description && <p>{activeVideo.description}</p>}
-              {activeVideo.taken_on && <time dateTime={activeVideo.taken_on}>{new Date(`${activeVideo.taken_on}T12:00:00`).toLocaleDateString()}</time>}
+          {selectedVideoIndex >= 0 && videos[selectedVideoIndex] && (() => {
+            const item = videos[selectedVideoIndex]
+            const url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(item.storage_path).data.publicUrl
+            return <div className="video-viewer" role="dialog" aria-modal="true" aria-label="Video viewer" onWheel={event => { event.preventDefault(); moveVideo(event.deltaY < 0 ? 1 : -1) }}>
+              <button className="video-close" type="button" aria-label="Close video viewer" onClick={() => setSelectedVideoIndex(-1)}>×</button>
+              <button className="video-previous" type="button" aria-label="Previous video" disabled={selectedVideoIndex === 0} onClick={() => moveVideo(-1)}>↑</button>
+              <video key={item.id} src={url} controls autoPlay playsInline />
+              <button className="video-next" type="button" aria-label="Next video" disabled={selectedVideoIndex === videos.length - 1} onClick={() => moveVideo(1)}>↓</button>
+              <p>{item.description || item.file_name}{item.taken_on && ` · ${new Date(`${item.taken_on}T00:00:00`).toLocaleDateString()}`}</p>
             </div>
-          </div>
-          {videos.length > 1 && <button className="viewer-nav viewer-next" type="button" aria-label="Next video" onClick={event => { event.stopPropagation(); moveVideo(1) }}>↑</button>}
-          {videos.length > 1 && <span className="viewer-hint">SCROLL UP: NEXT <span>·</span> SCROLL DOWN: PREVIOUS</span>}
-        </div>
+          })()}
+        </>
       )}
     </section>
   )
