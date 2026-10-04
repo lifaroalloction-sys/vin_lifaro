@@ -4,10 +4,10 @@ Private memories site. React + Vite, Supabase (login, database, access rules), h
 
 ## 1. Supabase (free)
 1. Create a project at supabase.com.
-2. SQL Editor: paste `supabase/schema.sql`, replace `YOUR-ADMIN-EMAIL@gmail.com` with your email, run it.
-3. Authentication > URL Configuration: set Site URL to `https://lifaroalloction-sys.github.io/vin_lifaro/` and add that URL to the allowed redirect URLs. Add `http://localhost:5173/` there only for local development.
-4. Settings > API: copy the Project URL and the anon public key.
-5. Sign in with an approved email and password. Use the password setup/reset link once to create a password; later sign-ins do not send email.
+2. SQL Editor: paste `supabase/schema.sql` and run it once. The admin email is already set in the file.
+3. Authentication > URL Configuration: set Site URL to `https://lifaroalloction-sys.github.io/vin_lifaro/` and add that exact URL under the allowed redirect URLs. Add `http://localhost:5173/` only for local development. Do not leave localhost as the production Site URL.
+4. Settings > API Keys: copy the Project URL and the publishable (or legacy anon public) key.
+5. Only emails in the admins or viewers tables can request a sign-in link. The link is sent by email for each sign-in; no password is used. Request a fresh link if one expires, and use it only once.
 
 ## 2. Run locally
     cp .env.example .env     # paste the two values

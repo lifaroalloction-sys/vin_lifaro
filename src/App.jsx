@@ -7,7 +7,6 @@ function getAuthRedirectUrl() {
 
 function Login() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   async function submit(e) {
@@ -17,26 +16,13 @@ function Login() {
       const { data, error: accessError } = await supabase.rpc('email_allowed', { e: addr })
       if (accessError) throw accessError
       if (!data) { setMsg('This email is not approved. Ask the admin to add it.'); return }
-      const { error } = await supabase.auth.signInWithPassword({ email: addr, password })
-      setMsg(error ? 'Email or password is incorrect.' : '')
+      const { error } = await supabase.auth.signInWithOtp({
+        email: addr,
+        options: { emailRedirectTo: getAuthRedirectUrl() }
+      })
+      setMsg(error ? error.message : 'Check your inbox for the sign-in link.')
     } catch {
-      setMsg('Could not sign in. Please try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-  async function resetPassword() {
-    const addr = email.trim().toLowerCase()
-    if (!addr) { setMsg('Enter your email address first.'); return }
-    setBusy(true); setMsg('')
-    try {
-      const { data, error } = await supabase.rpc('email_allowed', { e: addr })
-      if (error) throw error
-      if (!data) { setMsg('This email is not approved. Ask the admin to add it.'); return }
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(addr, { redirectTo: getAuthRedirectUrl() })
-      setMsg(resetError ? resetError.message : 'Check your inbox for a password setup link.')
-    } catch {
-      setMsg('Could not request a password link. Please try again.')
+      setMsg('Could not send a sign-in link. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -47,37 +33,7 @@ function Login() {
       <p className="muted">A private place for trips, family, and the moments that matter.</p>
       <form onSubmit={submit}>
         <input type="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-        <input type="password" required placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-        <button className="primary" disabled={busy}>Sign in</button>
-      </form>
-      <button className="link" type="button" disabled={busy} onClick={resetPassword}>Email me a password setup/reset link</button>
-      {msg && <p className="note">{msg}</p>}
-    </main>
-  )
-}
-
-function PasswordRecovery({ onComplete }) {
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [msg, setMsg] = useState('')
-  const [busy, setBusy] = useState(false)
-  async function submit(e) {
-    e.preventDefault(); setMsg('')
-    if (password.length < 8) { setMsg('Use at least 8 characters for your password.'); return }
-    if (password !== confirmPassword) { setMsg('The passwords do not match.'); return }
-    setBusy(true)
-    const { error } = await supabase.auth.updateUser({ password })
-    setBusy(false)
-    if (error) { setMsg(error.message); return }
-    onComplete()
-  }
-  return (
-    <main className="login">
-      <h1>Set your password</h1>
-      <form onSubmit={submit}>
-        <input type="password" required minLength={8} placeholder="New password" value={password} onChange={e => setPassword(e.target.value)} />
-        <input type="password" required minLength={8} placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-        <button className="primary" disabled={busy}>Save password</button>
+        <button className="primary" disabled={busy}>Send sign-in link</button>
       </form>
       {msg && <p className="note">{msg}</p>}
     </main>
@@ -185,17 +141,13 @@ export default function App() {
 
 function ConfiguredApp() {
   const [session, setSession] = useState(undefined)
-  const [passwordRecovery, setPasswordRecovery] = useState(false)
   const [role, setRole] = useState(null)
   const [tab, setTab] = useState('memories')
   const [cat, setCat] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      setSession(s)
-      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
-    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
   }, [])
   useEffect(() => {
@@ -205,7 +157,6 @@ function ConfiguredApp() {
   }, [session])
 
   if (session === undefined) return <p className="center muted">Loading…</p>
-  if (passwordRecovery && session) return <PasswordRecovery onComplete={() => setPasswordRecovery(false)} />
   if (!session) return <Login />
   if (!role) return <p className="center muted">Checking access…</p>
   if (role === 'none') return (
