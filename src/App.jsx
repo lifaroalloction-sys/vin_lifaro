@@ -116,6 +116,16 @@ function Viewers() {
 }
 
 export default function App() {
+  if (!supabase) return (
+    <main className="login">
+      <h1>My Memories</h1>
+      <p className="muted">Supabase is not configured for this deployment yet.</p>
+    </main>
+  )
+  return <ConfiguredApp />
+}
+
+function ConfiguredApp() {
   const [session, setSession] = useState(undefined)
   const [role, setRole] = useState(null)
   const [tab, setTab] = useState('memories')

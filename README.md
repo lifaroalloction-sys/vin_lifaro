@@ -20,7 +20,7 @@ Private memories site. React + Vite, Supabase (login, database, access rules), h
     git push -u origin main
 
 ## 4. Host on GitHub Pages
-1. In the repository, open Settings > Secrets and variables > Actions. Add `VITE_SUPABASE_URL` as a repository variable and `VITE_SUPABASE_ANON_KEY` as a repository secret.
+1. In the repository, open Settings > Secrets and variables > Actions. Add `VITE_SUPABASE_URL` as a repository variable and `VITE_SUPABASE_ANON_KEY` as a repository secret. Until both are set, the site displays a configuration notice instead of the sign-in form.
 2. Open Settings > Pages and select GitHub Actions as the build and deployment source.
 3. Push to `main` or manually run the Deploy to GitHub Pages workflow under Actions.
 4. The site will be available at `https://lifaroalloction-sys.github.io/vin_lifaro/`.
