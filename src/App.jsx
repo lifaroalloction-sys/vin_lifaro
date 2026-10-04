@@ -3,7 +3,6 @@ import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'memories'
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024
-const ADMIN_EMAIL = 'lifaro.alloction@gmail.com'
 
 async function removeAlbumFiles(albumIds) {
   if (!albumIds.length) return null
@@ -38,6 +37,7 @@ function useAdminSession() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
   const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [adminEmail, setAdminEmail] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
@@ -66,7 +66,8 @@ function useAdminSession() {
   async function signIn(event) {
     event.preventDefault()
     setAuthMessage('')
-    const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: adminPassword })
+    const email = adminEmail.trim().toLowerCase()
+    const { error } = await supabase.auth.signInWithPassword({ email, password: adminPassword })
     if (error) {
       setAuthMessage(`Admin sign-in failed: ${error.message}`)
       return
@@ -88,12 +89,14 @@ function useAdminSession() {
 
   async function sendPasswordReset() {
     setAuthMessage('')
+    const email = adminEmail.trim().toLowerCase()
+    if (!email) { setAuthMessage('Enter your admin email first.'); return }
     const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString()
-    const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, { redirectTo })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
     setAuthMessage(error ? error.message : 'Password reset email sent. Open the newest reset email to continue.')
   }
 
-  return { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery }
+  return { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminEmail, setAdminEmail, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery }
 }
 
 function PasswordRecovery({ onComplete }) {
@@ -369,7 +372,7 @@ function AlbumView({ album, onBack, isAdmin }) {
 
 export default function App() {
   const [cat, setCat] = useState(null)
-  const { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery } = useAdminSession()
+  const { session, isAdmin, authMessage, setAuthMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminEmail, setAdminEmail, adminPassword, setAdminPassword, sendPasswordReset, passwordRecovery, setPasswordRecovery } = useAdminSession()
   if (!supabase) return (
     <main className="login">
       <h1>My Memories</h1>
@@ -389,7 +392,7 @@ export default function App() {
       {showAdminLogin && !isAdmin && (
         <form className="admin-login" onSubmit={signIn}>
           <span className="admin-login-title">ADMIN ACCESS</span>
-          <input type="email" value={ADMIN_EMAIL} readOnly aria-label="Admin email" />
+          <input type="email" value={adminEmail} onChange={event => setAdminEmail(event.target.value)} placeholder="Admin email" autoComplete="username" aria-label="Admin email" required />
           <input type="password" value={adminPassword} onChange={event => setAdminPassword(event.target.value)} placeholder="Admin password" autoComplete="current-password" required />
           <button className="primary">Sign in <span>↗</span></button>
           <button className="link" type="button" onClick={sendPasswordReset}>Reset password</button>

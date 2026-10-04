@@ -4,11 +4,11 @@ Public memories site. Browsing is open; only the admin can edit categories/album
 
 ## 1. Supabase (free)
 1. Create a project at supabase.com.
-2. In SQL Editor, run `supabase/schema.sql` once to create the tables and starter categories. The admin email is already set in the file. If the tables already exist, run `supabase/public_seed.sql` to add any missing starter categories and albums instead.
+2. In SQL Editor, run `supabase/schema.sql` once to create the tables and starter categories. The admin email is already set in the file. If the tables already exist, run `supabase/public_seed.sql` to add any missing starter categories and albums instead. For an existing project, run `supabase/update_admin_email.sql` to replace the old admin role with the current admin.
 3. Run `supabase/public_read_access.sql` in the SQL Editor. This makes categories and albums publicly readable; do not put private information in them.
 4. Settings > API Keys: copy the Project URL and the publishable (or legacy anon public) key.
 5. Run `supabase/media_uploads.sql` in the SQL Editor to create the public media bucket and admin-only upload policies.
-6. Authentication > Users > Add user > Create new user: create `lifaro.alloction@gmail.com`, set a new password there, and confirm the user if prompted. Choose Create, not Invite. Do not put the password in SQL, source code, or GitHub. Supabase Auth checks the password; the database verifies the admin role.
+6. Authentication > Users > Add user > Create new user: create `vinothkumar6381650856@gmail.com`, set a new password there, and confirm the user if prompted. Choose Create, not Invite. Do not put the password in SQL, source code, or GitHub. Supabase Auth checks the password; the database verifies the admin role.
 
 ## 2. Run locally
     cp .env.example .env     # paste the two values
