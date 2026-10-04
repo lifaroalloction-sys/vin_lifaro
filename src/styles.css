@@ -219,6 +219,9 @@ nav { display: flex; align-items: center; gap: 14px; }
 .notice-success .notice-mark { background: var(--lime); color: var(--ink); }
 .notice-close { display: grid; width: 32px; min-height: 32px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
 .notice-close:hover { transform: none; border: 0; background: rgba(32, 40, 42, .08); color: var(--ink); }
+.loading-state { display: flex; min-height: 128px; align-items: center; justify-content: center; gap: 11px; border: 1px dashed var(--line); border-radius: 9px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.loading-spinner { width: 19px; height: 19px; border: 2px solid var(--line); border-top-color: var(--coral); border-radius: 50%; animation: loading-spin .75s linear infinite; }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
 .upload-button { position: relative; display: inline-flex; min-height: 44px; align-items: center; overflow: hidden; margin: 4px 0 18px; padding: 9px 15px; border: 1px solid var(--teal); border-radius: 8px; background: var(--teal); color: white; font-weight: 700; }
 .upload-button input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .upload-button input:disabled { cursor: wait; }
@@ -262,6 +265,7 @@ nav { display: flex; align-items: center; gap: 14px; }
 	.section-heading h2 { font-size: 25px; }
 	.section-heading .eyebrow { font-size: 10px; }
 	.section-count { font-size: 11px; }
+	.loading-state { min-height: 108px; font-size: 13px; }
 	.grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 	.tile { min-height: 176px; padding: 13px; gap: 5px; }
 	.tile-index { font-size: 9px; }

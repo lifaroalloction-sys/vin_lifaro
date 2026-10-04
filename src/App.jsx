@@ -137,13 +137,26 @@ function Notice({ message, onDismiss, tone = 'error' }) {
   )
 }
 
+function LoadingState({ label }) {
+  return <div className="loading-state" role="status"><span className="loading-spinner" aria-hidden="true" />{label}</div>
+}
+
 function Home({ onOpen, isAdmin }) {
   const [cats, setCats] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const load = async () => {
-    const { data, error: loadError } = await supabase.from('categories').select('*, albums(count)').order('created_at')
-    setCats(data || [])
-    setError(loadError ? 'Could not load memories. Public read access may not be enabled yet.' : '')
+    setLoading(true)
+    try {
+      const { data, error: loadError } = await supabase.from('categories').select('*, albums(count)').order('created_at')
+      setCats(data || [])
+      setError(loadError ? 'Could not load memories. Public read access may not be enabled yet.' : '')
+    } catch {
+      setCats([])
+      setError('Could not load memories. Check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { load() }, [])
   const albumTotal = cats.reduce((total, category) => total + (category.albums?.[0]?.count || 0), 0)
@@ -172,28 +185,30 @@ function Home({ onOpen, isAdmin }) {
         </div>
         <aside className="archive-stamp" aria-label={`${cats.length} collections in the archive`}>
           <span className="stamp-label">MEMORY INDEX</span>
-          <strong>{String(cats.length).padStart(2, '0')}</strong>
+          <strong>{loading ? '··' : String(cats.length).padStart(2, '0')}</strong>
           <span className="stamp-footer">COLLECTIONS <span>✳</span></span>
         </aside>
       </section>
       <div className="section-heading">
         <div><p className="eyebrow">THE MEMORY INDEX</p><h2>All the good bits</h2></div>
-        <span className="section-count">{cats.length} collections <span>/</span> {albumTotal} albums</span>
+        <span className="section-count">{loading ? 'Loading collections…' : `${cats.length} collections / ${albumTotal} albums`}</span>
       </div>
-      <div className="grid">
-        {cats.map((c, index) => (
-          <div key={c.id} className="tile" onClick={() => onOpen(c)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onOpen(c)}>
-            <span className="tile-index">COLLECTION / {String(index + 1).padStart(2, '0')}</span>
-            <span className="emoji" aria-hidden="true">{c.icon}</span>
-            <strong className="tile-title">{c.name}</strong>
-            <span className="tile-meta">{String(c.albums?.[0]?.count || 0).padStart(2, '0')} albums <span>↗</span></span>
-            {isAdmin && <button className="x" aria-label={`Delete ${c.name}`} onClick={event => { event.stopPropagation(); remove(c) }}>Delete</button>}
-          </div>
-        ))}
-      </div>
+      {loading ? <LoadingState label="Gathering your collections…" /> : (
+        <div className="grid">
+          {cats.map((c, index) => (
+            <div key={c.id} className="tile" onClick={() => onOpen(c)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onOpen(c)}>
+              <span className="tile-index">COLLECTION / {String(index + 1).padStart(2, '0')}</span>
+              <span className="emoji" aria-hidden="true">{c.icon}</span>
+              <strong className="tile-title">{c.name}</strong>
+              <span className="tile-meta">{String(c.albums?.[0]?.count || 0).padStart(2, '0')} albums <span>↗</span></span>
+              {isAdmin && <button className="x" aria-label={`Delete ${c.name}`} onClick={event => { event.stopPropagation(); remove(c) }}>Delete</button>}
+            </div>
+          ))}
+        </div>
+      )}
       {isAdmin && <><h3>Add a category</h3><AddForm withIcon placeholder="Category name" onAdd={add} /></>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
-      {!cats.length && !error && <p className="muted">No categories yet.</p>}
+      {!loading && !cats.length && !error && <p className="muted">No categories yet.</p>}
     </>
   )
 }
@@ -201,11 +216,20 @@ function Home({ onOpen, isAdmin }) {
 function Category({ cat, onBack, isAdmin }) {
   const [albums, setAlbums] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const [selectedAlbum, setSelectedAlbum] = useState(null)
   const load = async () => {
-    const { data, error: loadError } = await supabase.from('albums').select('*').eq('category_id', cat.id).order('created_at')
-    setAlbums(data || [])
-    setError(loadError ? 'Could not load albums. Public read access may not be enabled yet.' : '')
+    setLoading(true)
+    try {
+      const { data, error: loadError } = await supabase.from('albums').select('*').eq('category_id', cat.id).order('created_at')
+      setAlbums(data || [])
+      setError(loadError ? 'Could not load albums. Public read access may not be enabled yet.' : '')
+    } catch {
+      setAlbums([])
+      setError('Could not load albums. Check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { load() }, [cat.id])
   async function add(name) {
@@ -231,21 +255,23 @@ function Category({ cat, onBack, isAdmin }) {
       <div className="collection-heading">
         <span className="collection-icon" aria-hidden="true">{cat.icon}</span>
         <div><p className="eyebrow">COLLECTION</p><h1>{cat.name}</h1></div>
-        <span className="section-count">{albums.length} albums</span>
+        <span className="section-count">{loading ? 'Loading albums…' : `${albums.length} albums`}</span>
       </div>
-      <div className="grid">
-        {albums.map((album, index) => (
-          <div key={album.id} className="tile" onClick={() => setSelectedAlbum(album)} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && setSelectedAlbum(album)}>
-            <span className="tile-index">ALBUM / {String(index + 1).padStart(2, '0')}</span>
-            <strong className="tile-title">{album.name}</strong>
-            <span className="tile-meta">OPEN ALBUM <span>↗</span></span>
-            {isAdmin && <button className="x" aria-label={`Delete ${album.name}`} onClick={event => { event.stopPropagation(); remove(album) }}>Delete</button>}
-          </div>
-        ))}
-      </div>
+      {loading ? <LoadingState label="Finding the albums…" /> : (
+        <div className="grid">
+          {albums.map((album, index) => (
+            <div key={album.id} className="tile" onClick={() => setSelectedAlbum(album)} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && setSelectedAlbum(album)}>
+              <span className="tile-index">ALBUM / {String(index + 1).padStart(2, '0')}</span>
+              <strong className="tile-title">{album.name}</strong>
+              <span className="tile-meta">OPEN ALBUM <span>↗</span></span>
+              {isAdmin && <button className="x" aria-label={`Delete ${album.name}`} onClick={event => { event.stopPropagation(); remove(album) }}>Delete</button>}
+            </div>
+          ))}
+        </div>
+      )}
       {isAdmin && <><h3>Add an album</h3><AddForm placeholder="Album name" onAdd={add} /></>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
-      {!albums.length && !error && <p className="muted">No albums yet.</p>}
+      {!loading && !albums.length && !error && <p className="muted">No albums yet.</p>}
     </>
   )
 }
@@ -254,11 +280,20 @@ function AlbumView({ album, onBack, isAdmin }) {
   const [media, setMedia] = useState([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   async function load() {
-    const { data, error: loadError } = await supabase.from('media').select('*').eq('album_id', album.id).order('created_at', { ascending: false })
-    setMedia(data || [])
-    setError(loadError ? 'Media storage is not set up yet. Run supabase/media_uploads.sql in the project SQL Editor.' : '')
+    setLoading(true)
+    try {
+      const { data, error: loadError } = await supabase.from('media').select('*').eq('album_id', album.id).order('created_at', { ascending: false })
+      setMedia(data || [])
+      setError(loadError ? 'Media storage is not set up yet. Run supabase/media_uploads.sql in the project SQL Editor.' : '')
+    } catch {
+      setMedia([])
+      setError('Could not load photos or videos. Check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { load() }, [album.id])
 
@@ -312,18 +347,22 @@ function AlbumView({ album, onBack, isAdmin }) {
       <div className="album-heading"><p className="eyebrow">PHOTO JOURNAL <span className="eyebrow-rule" /> {new Date().getFullYear()}</p><h1>{album.name}</h1><p className="hero-caption">A little more of the story.</p></div>
       {isAdmin && <label className="upload-button primary">{busy ? 'Uploading…' : 'Upload photos or videos'}<input type="file" accept="image/*,video/*" multiple disabled={busy} onChange={upload} /></label>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
-      {!media.length && !error && <p className="muted">No photos or videos yet.</p>}
-      <div className="media-grid">
-        {media.map(item => {
-          const url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(item.storage_path).data.publicUrl
-          return (
-            <figure className="media-item" key={item.id}>
-              {item.media_type === 'video' ? <video src={url} controls preload="metadata" /> : <img src={url} alt={item.file_name} loading="lazy" />}
-              <figcaption>{item.file_name}{isAdmin && <button className="x" onClick={() => remove(item)}>Delete</button>}</figcaption>
-            </figure>
-          )
-        })}
-      </div>
+      {loading ? <LoadingState label="Opening the album…" /> : (
+        <>
+          {!media.length && !error && <p className="muted">No photos or videos yet.</p>}
+          <div className="media-grid">
+            {media.map(item => {
+              const url = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(item.storage_path).data.publicUrl
+              return (
+                <figure className="media-item" key={item.id}>
+                  {item.media_type === 'video' ? <video src={url} controls preload="metadata" /> : <img src={url} alt={item.file_name} loading="lazy" />}
+                  <figcaption>{item.file_name}{isAdmin && <button className="x" onClick={() => remove(item)}>Delete</button>}</figcaption>
+                </figure>
+              )
+            })}
+          </div>
+        </>
+      )}
     </section>
   )
 }
