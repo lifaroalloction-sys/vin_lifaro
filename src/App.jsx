@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'memories'
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024
+const ADMIN_EMAIL = 'lifaro.alloction@gmail.com'
 
 async function removeAlbumFiles(albumIds) {
   if (!albumIds.length) return null
@@ -36,6 +37,8 @@ function useAdminSession() {
   const [session, setSession] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
 
   useEffect(() => {
     if (!supabase) return
@@ -56,23 +59,30 @@ function useAdminSession() {
     return () => { active = false }
   }, [session])
 
-  async function signIn() {
+  async function signIn(event) {
+    event.preventDefault()
     setAuthMessage('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: new URL(import.meta.env.BASE_URL, window.location.origin).toString(),
-        queryParams: { login_hint: 'lifaro.alloction@gmail.com' }
-      }
-    })
-    if (error) setAuthMessage('Admin sign-in is unavailable. Check Google provider setup in Supabase.')
+    const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: adminPassword })
+    if (error) {
+      setAuthMessage('Admin sign-in failed. Check the email and password configured in Supabase Auth.')
+      return
+    }
+    const { data, error: roleError } = await supabase.rpc('is_admin')
+    if (roleError || data !== true) {
+      await supabase.auth.signOut()
+      setAuthMessage('This account is not configured as the admin.')
+      return
+    }
+    setAdminPassword('')
+    setShowAdminLogin(false)
+    setAuthMessage('')
   }
 
   async function signOut() {
     await supabase.auth.signOut()
   }
 
-  return { session, isAdmin, authMessage, signIn, signOut }
+  return { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword }
 }
 
 function Home({ onOpen, isAdmin }) {
@@ -245,7 +255,7 @@ function AlbumView({ album, onBack, isAdmin }) {
 
 export default function App() {
   const [cat, setCat] = useState(null)
-  const { session, isAdmin, authMessage, signIn, signOut } = useAdminSession()
+  const { session, isAdmin, authMessage, signIn, signOut, showAdminLogin, setShowAdminLogin, adminPassword, setAdminPassword } = useAdminSession()
   if (!supabase) return (
     <main className="login">
       <h1>My Memories</h1>
@@ -256,8 +266,15 @@ export default function App() {
     <div className="shell">
       <header>
         <strong className="brand">My Memories</strong>
-        <nav>{isAdmin ? <button onClick={signOut}>Admin sign out</button> : <button onClick={signIn}>Admin sign in</button>}</nav>
+        <nav>{isAdmin ? <button onClick={signOut}>Admin sign out</button> : <button onClick={() => setShowAdminLogin(open => !open)}>Admin sign in</button>}</nav>
       </header>
+      {showAdminLogin && !isAdmin && (
+        <form className="admin-login" onSubmit={signIn}>
+          <input type="email" value={ADMIN_EMAIL} readOnly aria-label="Admin email" />
+          <input type="password" value={adminPassword} onChange={event => setAdminPassword(event.target.value)} placeholder="Admin password" autoComplete="current-password" required />
+          <button className="primary">Sign in</button>
+        </form>
+      )}
       {authMessage && <p className="note">{authMessage}</p>}
       {session && !isAdmin && <p className="muted">Browsing publicly. Only the configured admin can make changes.</p>}
       <main>
