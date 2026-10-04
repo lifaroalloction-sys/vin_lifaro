@@ -227,7 +227,8 @@ nav { display: flex; align-items: center; gap: 14px; }
 .upload-button input:disabled { cursor: wait; }
 .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 15px; margin-top: 18px; }
 .media-item { min-width: 0; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
-.media-item img, .media-item video { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--ink); }
+.media-item img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--ink); }
+.media-item video { display: block; width: 100%; height: auto; max-height: 78vh; aspect-ratio: auto; object-fit: contain; background: var(--ink); }
 .media-item figcaption { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px; overflow-wrap: anywhere; font-size: 13px; }
 
 .login { width: min(460px, 100% - 40px); margin: 15vh auto; }
