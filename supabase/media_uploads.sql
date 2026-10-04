@@ -10,6 +10,7 @@ create table if not exists public.media (
   created_at timestamptz not null default now()
 );
 
+alter table public.albums add column if not exists icon text not null default '📁';
 alter table public.media add column if not exists description text not null default '';
 alter table public.media add column if not exists taken_on date;
 

@@ -2,7 +2,7 @@
 create table admins (email text primary key);
 create table viewers (email text primary key);
 create table categories (id uuid primary key default gen_random_uuid(), name text not null, icon text not null default '📁', created_at timestamptz default now());
-create table albums (id uuid primary key default gen_random_uuid(), category_id uuid not null references categories(id) on delete cascade, name text not null, created_at timestamptz default now());
+create table albums (id uuid primary key default gen_random_uuid(), category_id uuid not null references categories(id) on delete cascade, name text not null, icon text not null default '📁', created_at timestamptz default now());
 
 alter table admins enable row level security;
 alter table viewers enable row level security;

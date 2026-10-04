@@ -235,8 +235,8 @@ function Category({ cat, onBack, isAdmin }) {
     }
   }
   useEffect(() => { load() }, [cat.id])
-  async function add(name) {
-    const { error: addError } = await supabase.from('albums').insert({ name, category_id: cat.id })
+  async function add(name, icon) {
+    const { error: addError } = await supabase.from('albums').insert({ name, icon, category_id: cat.id })
     if (addError) { setError(addError.message); return }
     await load()
   }
@@ -265,6 +265,7 @@ function Category({ cat, onBack, isAdmin }) {
           {albums.map((album, index) => (
             <div key={album.id} className="tile" onClick={() => setSelectedAlbum(album)} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && setSelectedAlbum(album)}>
               <span className="tile-index">ALBUM / {String(index + 1).padStart(2, '0')}</span>
+              <span className="emoji" aria-hidden="true">{album.icon || '📁'}</span>
               <strong className="tile-title">{album.name}</strong>
               <span className="tile-meta">OPEN ALBUM <span>↗</span></span>
               {isAdmin && <button className="x" aria-label={`Delete ${album.name}`} onClick={event => { event.stopPropagation(); remove(album) }}>Delete</button>}
@@ -272,7 +273,7 @@ function Category({ cat, onBack, isAdmin }) {
           ))}
         </div>
       )}
-      {isAdmin && <><h3>Add an album</h3><AddForm placeholder="Album name" onAdd={add} /></>}
+      {isAdmin && <><h3>Add an album</h3><AddForm withIcon placeholder="Album name" onAdd={add} /></>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
       {!loading && !albums.length && !error && <p className="muted">No albums yet.</p>}
     </>
