@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { authStorageKey, supabase } from './supabase'
 
 function clearPersistedAuth() {
-  if (!authStorageKey) return
+  const projectKeys = []
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index)
+    if (key && (key === authStorageKey || /^sb-[a-z0-9]+-auth-token$/.test(key))) projectKeys.push(key)
+  }
+  projectKeys.forEach(key => localStorage.removeItem(key))
+
+  if (authStorageKey === null) return
   localStorage.removeItem(authStorageKey)
 }
 
@@ -97,8 +104,10 @@ function useAdminSession() {
     })
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !nextSession)) {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !nextSession) {
         clearPersistedAuth()
+        setSession(null)
+        return
       }
       setSession(nextSession)
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
