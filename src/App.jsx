@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from './supabase'
+import { authStorageKey, supabase } from './supabase'
+
+function clearPersistedAuth() {
+  if (!authStorageKey) return
+  localStorage.removeItem(authStorageKey)
+}
 
 const STORAGE_BUCKET = 'memories'
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024
@@ -78,8 +83,23 @@ function useAdminSession() {
 
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        clearPersistedAuth()
+        setSession(null)
+        return
+      }
+      setSession(data.session)
+    }).catch(() => {
+      clearPersistedAuth()
+      setSession(null)
+    })
+
     const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !nextSession)) {
+        clearPersistedAuth()
+      }
       setSession(nextSession)
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
     })
