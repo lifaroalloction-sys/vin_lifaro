@@ -14,7 +14,7 @@ const ICON_OPTIONS = [
   ['💃', 'Dance'],
   ['🎂', 'Birthday'],
   ['👨‍👩‍👧', 'Family'],
-  ['🏆', 'Achievement'],
+  ['🏆',  'Achievement'],
   ['🛕', 'Temple'],
   ['🎉', 'Celebration'],
   ['🎥', 'Video'],
