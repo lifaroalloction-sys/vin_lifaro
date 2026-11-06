@@ -258,7 +258,7 @@ function Home({ onOpen, isAdmin }) {
     try {
       const { data, error: loadError } = await supabase.from('categories').select('*, albums(count)').order('created_at')
       setCats(data || [])
-      setError(loadError ? 'Could not load memories. Public read access may not be enabled yet.' : '')
+      if (loadError) setError('Could not load memories. Public read access may not be enabled yet.')
     } catch {
       setCats([])
       setError('Could not load memories. Check your connection and try again.')
@@ -331,7 +331,7 @@ function Category({ cat, onBack, isAdmin }) {
     try {
       const { data, error: loadError } = await supabase.from('albums').select('*').eq('category_id', cat.id).order('created_at')
       setAlbums(data || [])
-      setError(loadError ? 'Could not load albums. Public read access may not be enabled yet.' : '')
+      if (loadError) setError('Could not load albums. Public read access may not be enabled yet.')
     } catch {
       setAlbums([])
       setError('Could not load albums. Check your connection and try again.')
@@ -402,7 +402,7 @@ function AlbumView({ album, onBack, isAdmin }) {
     try {
       const { data, error: loadError } = await supabase.from('media').select('*').eq('album_id', album.id).order('created_at', { ascending: false })
       setMedia(data || [])
-      setError(loadError ? 'Media storage is not set up yet. Run supabase/media_uploads.sql in the project SQL Editor.' : '')
+      if (loadError) setError('Media storage is not set up yet. Run supabase/media_uploads.sql in the project SQL Editor.')
     } catch {
       setMedia([])
       setError('Could not load photos or videos. Check your connection and try again.')
@@ -417,7 +417,6 @@ function AlbumView({ album, onBack, isAdmin }) {
     const files = selectedFiles
     if (!files.length) return
     setBusy(true)
-    setError('')
     for (const [fileIndex, file] of files.entries()) {
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         setError(`${file.name} is not an image or video.`)
