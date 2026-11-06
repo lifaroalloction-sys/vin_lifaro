@@ -31,7 +31,7 @@ create policy "admin manage media" on public.media
   with check (public.is_admin());
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('memories', 'memories', true, 104857600, array['image/*', 'video/*'])
+values ('memories', 'memories', true, 262144000, array['image/*', 'video/*'])
 on conflict (id) do update set
   public = excluded.public,
   file_size_limit = excluded.file_size_limit,

@@ -15,7 +15,7 @@ function clearPersistedAuth() {
 }
 
 const STORAGE_BUCKET = 'memories'
-const MAX_UPLOAD_SIZE = 100 * 1024 * 1024
+const MAX_UPLOAD_SIZE = 250 * 1024 * 1024
 const ICON_OPTIONS = [
   ['📁', 'Folder'],
   ['✈️', 'Travel'],
@@ -416,7 +416,7 @@ function AlbumView({ album, onBack, isAdmin }) {
         continue
       }
       if (file.size > MAX_UPLOAD_SIZE) {
-        setError(`${file.name} is larger than the 100 MB limit.`)
+        setError(`${file.name} is larger than the 250 MB limit.`)
         continue
       }
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
