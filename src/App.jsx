@@ -92,6 +92,14 @@ async function uploadMediaFile(file, storagePath, onProgress) {
   })
 }
 
+function getUploadErrorMessage(error, file) {
+  if (error instanceof tus.DetailedError && error.originalResponse?.getStatus() === 413) {
+    const fileSizeMb = Math.ceil(file.size / (1024 * 1024))
+    return `Supabase rejected this ${fileSizeMb} MB file because it exceeds the project's global Storage limit. Set Storage → Settings → Global file size limit to at least ${fileSizeMb} MB. Supabase Free is capped at 50 MB; upgrading to Pro is required. The bucket limit cannot override the project limit.`
+  }
+  return error.message
+}
+
 function AddForm({ placeholder, onAdd, withIcon }) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📁')
@@ -427,7 +435,7 @@ function AlbumView({ album, onBack, isAdmin }) {
           setUploadProgress(`Uploading ${fileIndex + 1} of ${files.length} · ${Math.round(uploaded / total * 100)}%`)
         })
       } catch (uploadError) {
-        setError(`${file.name}: ${uploadError.message}`)
+        setError(`${file.name}: ${getUploadErrorMessage(uploadError, file)}`)
         continue
       }
       const { error: rowError } = await supabase.from('media').insert({
