@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { authStorageKey, supabase } from './supabase'
+import * as tus from 'tus-js-client'
+import { authStorageKey, supabase, supabaseAnonKey, supabaseUrl } from './supabase'
 
 function clearPersistedAuth() {
   const projectKeys = []
@@ -14,7 +15,7 @@ function clearPersistedAuth() {
 }
 
 const STORAGE_BUCKET = 'memories'
-const MAX_UPLOAD_SIZE = 50 * 1024 * 1024
+const MAX_UPLOAD_SIZE = 100 * 1024 * 1024
 const ICON_OPTIONS = [
   ['📁', 'Folder'],
   ['✈️', 'Travel'],
@@ -57,6 +58,38 @@ async function removeAlbumFiles(albumIds) {
   if (!paths.length) return null
   const { error: storageError } = await supabase.storage.from(STORAGE_BUCKET).remove(paths)
   return storageError
+}
+
+async function uploadMediaFile(file, storagePath, onProgress) {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  if (!data.session) throw new Error('Admin session expired. Sign in again and retry the upload.')
+
+  const projectUrl = new URL(supabaseUrl)
+  const storageHost = projectUrl.hostname.replace(/\.supabase\.co$/, '.storage.supabase.co')
+  await new Promise((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `${projectUrl.protocol}//${storageHost}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: {
+        authorization: `Bearer ${data.session.access_token}`,
+        apikey: supabaseAnonKey
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: 6 * 1024 * 1024,
+      metadata: {
+        bucketName: STORAGE_BUCKET,
+        objectName: storagePath,
+        contentType: file.type,
+        cacheControl: '3600'
+      },
+      onError: reject,
+      onProgress,
+      onSuccess: resolve
+    })
+    upload.start()
+  })
 }
 
 function AddForm({ placeholder, onAdd, withIcon }) {
@@ -348,6 +381,7 @@ function AlbumView({ album, onBack, isAdmin }) {
   const [media, setMedia] = useState([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedFiles, setSelectedFiles] = useState([])
   const [description, setDescription] = useState('')
@@ -376,19 +410,26 @@ function AlbumView({ album, onBack, isAdmin }) {
     if (!files.length) return
     setBusy(true)
     setError('')
-    for (const file of files) {
+    for (const [fileIndex, file] of files.entries()) {
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         setError(`${file.name} is not an image or video.`)
         continue
       }
       if (file.size > MAX_UPLOAD_SIZE) {
-        setError(`${file.name} is larger than the 50 MB limit.`)
+        setError(`${file.name} is larger than the 100 MB limit.`)
         continue
       }
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
       const storagePath = `${album.id}/${crypto.randomUUID()}-${safeName}`
-      const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(storagePath, file, { contentType: file.type })
-      if (uploadError) { setError(uploadError.message); continue }
+      setUploadProgress(`Uploading ${fileIndex + 1} of ${files.length}…`)
+      try {
+        await uploadMediaFile(file, storagePath, (uploaded, total) => {
+          setUploadProgress(`Uploading ${fileIndex + 1} of ${files.length} · ${Math.round(uploaded / total * 100)}%`)
+        })
+      } catch (uploadError) {
+        setError(`${file.name}: ${uploadError.message}`)
+        continue
+      }
       const { error: rowError } = await supabase.from('media').insert({
         album_id: album.id,
         file_name: file.name,
@@ -404,6 +445,7 @@ function AlbumView({ album, onBack, isAdmin }) {
       }
     }
     setBusy(false)
+    setUploadProgress('')
     setSelectedFiles([])
     setDescription('')
     setTakenOn('')
@@ -443,7 +485,7 @@ function AlbumView({ album, onBack, isAdmin }) {
         <label className="upload-field"><span>Description</span><input value={description} onChange={event => setDescription(event.target.value)} placeholder="What happened in this moment?" disabled={busy} /></label>
         <label className="upload-field upload-date"><span>Date taken</span><input type="date" value={takenOn} onChange={event => setTakenOn(event.target.value)} disabled={busy} /></label>
         <label className="upload-button primary">{selectedFiles.length ? `${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} selected` : 'Choose photos or videos'}<input type="file" accept="image/*,video/*" multiple disabled={busy} onChange={event => { setSelectedFiles(Array.from(event.target.files || [])); event.target.value = '' }} /></label>
-        <button className="primary" type="submit" disabled={busy || !selectedFiles.length}>{busy ? 'Uploading…' : 'Upload'}</button>
+        <button className="primary" type="submit" disabled={busy || !selectedFiles.length}>{busy ? uploadProgress || 'Uploading…' : 'Upload'}</button>
       </form>}
       {error && <Notice message={error} onDismiss={() => setError('')} />}
       {loading ? <LoadingState label="Opening the album…" /> : (
